@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+/.vs
+/ProjetoFinal/.vs/ProjetoFinal/v16
+/ProjetoFinal/Debug
+/ProjetoFinal/ProjetoFinal.vcxproj.user
+/ProjetoFinal/ProjetoFinal.vcxproj.filters
+/ProjetoFinal/ProjetoFinal.vcxproj
+/ProjetoFinal/ProjetoFinal.sln
+/ProjetoFinal/src/.vscode
