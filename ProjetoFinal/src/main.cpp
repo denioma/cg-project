@@ -9,8 +9,9 @@
 #include "libs/objects.h"
 
 constexpr auto windowTitle = "Simple Audio Mixer";
-constexpr auto windowWidth = 600, windowHeight = 600, world = 10;
-constexpr auto fps = 60, msec = 1000/fps;
+constexpr auto world = 10;
+
+int windowWidth = 800, windowHeight = 600;
 
 void init();
 void draw();
@@ -18,13 +19,15 @@ void keyboard(unsigned char, int, int);
 void special(int, int, int);
 void timer(int);
 void eqTimer(int);
-void equalizer();
+void mouse(int, int);
+void wheel(int, int, int, int);
+void reshape(int, int);
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowSize(windowWidth, windowHeight);
-	glutInitWindowPosition(50, 50);
+	glutInitWindowPosition(20, 20);
 	glutCreateWindow(windowTitle);
 
 	init();
@@ -32,14 +35,18 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(draw);
 	glutKeyboardFunc(keyboard);
 	glutSpecialFunc(special);
+	glutMotionFunc(mouse);
+	glutMouseFunc(wheel);
 	glutTimerFunc(0, timer, 0);
 	glutTimerFunc(0, eqTimer, 1);
+	glutReshapeFunc(reshape);
 
 	glutMainLoop();
 	return 1;
 }
 
 void drawAxis() {
+	glLineWidth(1);
 	glColor4d(RED);
 	glBegin(GL_LINES); {
 		glVertex3d(0, 0, 0);
@@ -60,13 +67,14 @@ void drawAxis() {
 }
 
 // Camera variables
-const GLdouble visionRadius = 10, visionIncrement= 0.2, camIncrement = 0.25;
-GLdouble fov = 45, visionAngle = 0.5 * M_PI;
-GLdouble obs[] = { visionRadius * cos(visionAngle), 1, visionRadius*sin(visionAngle) };
-
+const GLdouble visionRadius = 10, visionIncrement = 0.2, camIncrement = 0.25;
+GLdouble fov = 45, visionAngle = 0, vertAngle = M_PI/3;
+GLdouble obs[3] = {
+	
+};
 mixerSettings interactive;
 bars eq;
-constexpr auto angleMin = -20, angleMax = -340, angleIncrement = 5;
+constexpr auto angleMin = -20, angleMax = -340, angleIncrement = -5;
 
 void init() {
 	glClearColor(WHITE);
@@ -75,9 +83,8 @@ void init() {
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	glLineWidth(2);
-	
-	interactive.slider = 0;
+
+	interactive.slider = 0.5;
 	interactive.knob1 = angleMin;
 	interactive.knob2 = angleMin;
 	interactive.knob3 = angleMin;
@@ -88,6 +95,10 @@ void init() {
 	interactive.pressed4 = false;
 }
 
+void drawCalls(const GLboolean axis) {
+	if (axis) drawAxis();
+	mixer(&interactive, &eq);
+}
 
 void draw() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -95,73 +106,101 @@ void draw() {
 	glViewport(0, 0, windowWidth, windowHeight);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(fov, windowWidth / windowHeight, 0.1, (double)3 * world);
+	gluPerspective(fov, (GLdouble)windowWidth / (GLdouble)windowHeight, 0.1, (double)3 * world);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+	obs[0] = visionRadius * sin(visionAngle) * sin(vertAngle);
+	obs[1] = visionRadius * cos(vertAngle);
+	obs[2] = visionRadius * cos(visionAngle) * sin(vertAngle);
 	gluLookAt(obs[0], obs[1], obs[2], 0, 0, 0, 0, 1, 0);
 
-	drawAxis();
-	mixer(&interactive, &eq);
+	drawCalls(true);
+
+	glViewport(windowWidth - 100, windowHeight - 100, 100, 100);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(-5, 5, -5, 5, -5, 5);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(0, 2, 0, 0, 0, 0, 0, 0, -1);
+
+	drawCalls(false);
+
+	glViewport(windowWidth - 100, windowHeight - 200, 100, 100);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(-5, 5, -5, 5, -5, 5);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(0, 0, 2, 0, 0, 0, 0, 1, 0);
+
+	drawCalls(false);
+
 	glutSwapBuffers();
 }
 
 void keyboard(unsigned char key, int x, int y) {
 	switch (tolower(key)) {
-	case 'w':
-		interactive.knob1 -= angleIncrement;
-		if (interactive.knob1 < angleMax) interactive.knob1 = angleMax;
-		break;
+	// Knob #1
 	case 'q':
 		interactive.knob1 += angleIncrement;
+		if (interactive.knob1 < angleMax) interactive.knob1 = angleMax;
+		break;
+	case 'a':
+		interactive.knob1 -= angleIncrement;
 		if (interactive.knob1 > angleMin) interactive.knob1 = angleMin;
+		break;
+	// Knob #2	
+	case 'w':
+		interactive.knob2 += angleIncrement;
+		if (interactive.knob2 < angleMax) interactive.knob2 = angleMax;
 		break;
 	case 's':
 		interactive.knob2 -= angleIncrement;
-		if (interactive.knob2 < angleMax) interactive.knob2 = angleMax;
-		break;
-	case 'a':
-		interactive.knob2 += angleIncrement;
 		if (interactive.knob2 > angleMin) interactive.knob2 = angleMin;
 		break;
-	case 'p':
-		interactive.knob3 -= angleIncrement;
+	// Knob #3
+	case 'e':
+		interactive.knob3 += angleIncrement;
 		if (interactive.knob3 < angleMax) interactive.knob3 = angleMax;
 		break;
-	case 'o':
-		interactive.knob3 += angleIncrement;
+	case 'd':
+		interactive.knob3 -= angleIncrement;
 		if (interactive.knob3 > angleMin) interactive.knob3 = angleMin;
 		break;
-	case 'l':
-		interactive.knob4 -= angleIncrement;
+	// Knob #4
+	case 'r':
+		interactive.knob4 += angleIncrement;
 		if (interactive.knob4 < angleMax) interactive.knob4 = angleMax;
 		break;
-	case 'k':
-		interactive.knob4 += angleIncrement;
+	case 'f':
+		interactive.knob4 -= angleIncrement;
 		if (interactive.knob4 > angleMin) interactive.knob4 = angleMin;
 		break;
+	// Slider
 	case '1':
-		interactive.slider -= 0.1;
-		if (interactive.slider < -0.5) interactive.slider = -0.5;
-		break;
-	case '2':
 		interactive.slider += 0.1;
 		if (interactive.slider > 0.5) interactive.slider = 0.5;
 		break;
-	case 'e':
+	case '2':
+		interactive.slider -= 0.1;
+		if (interactive.slider < -0.5) interactive.slider = -0.5;
+		break;
+	case 'z':
 		interactive.pressed1 = !interactive.pressed1;
 		break;
-	case 'd':
+	case 'x':
 		interactive.pressed2 = !interactive.pressed2;
 		break;
-	case 'i':
+	case 'c':
 		interactive.pressed3 = !interactive.pressed3;
 		break;
-	case 'j':
+	case 'v':
 		interactive.pressed4 = !interactive.pressed4;
 		break;
-	// Camera FOV controls
+		// Camera FOV controls
 	case '+':
-		fov -= 3;
+		if (fov - 3 > 0) fov -= 3;
 		break;
 	case '-':
 		fov += 3;
@@ -176,28 +215,30 @@ void keyboard(unsigned char key, int x, int y) {
 void special(int key, int x, int y) {
 	switch (key) {
 	case GLUT_KEY_UP:
-		obs[1] += camIncrement;
+		//obs[1] -= camIncrement;
+		vertAngle -= visionIncrement;
+		if (vertAngle <= 0) vertAngle = 0.001;
 		break;
+	// Camera Y position
 	case GLUT_KEY_DOWN:
-		obs[1] -= camIncrement;
+		//obs[1] += camIncrement;
+		vertAngle += visionIncrement;
+		if (vertAngle > M_PI) vertAngle = M_PI;
 		break;
+	// Camera rotation (y plane)
 	case GLUT_KEY_LEFT:
 		visionAngle += visionIncrement;
-		obs[0] = visionRadius * cos(visionAngle);
-		obs[2] = visionRadius * sin(visionAngle);
 		break;
 	case GLUT_KEY_RIGHT:
 		visionAngle -= visionIncrement;
-		obs[0] = visionRadius * cos(visionAngle);
-		obs[2] = visionRadius * sin(visionAngle);
 		break;
+	// Fullscreen toggle
 	case GLUT_KEY_F11:
 		glutFullScreenToggle();
 		break;
 	}
 }
 
-GLdouble bar1, bar2, bar3, bar4, bar5;
 std::random_device rd;
 std::uniform_real_distribution<GLdouble> d(0, 5);
 
@@ -205,16 +246,18 @@ constexpr auto eqFps = 20, eqMsec = 1000 / eqFps;
 
 void eqTimer(int value) {
 	glutTimerFunc(eqMsec, eqTimer, 1);
-	if (interactive.pressed1) eq.bar1 = d(rd);
+	GLdouble slider = -interactive.slider + 0.5;
+	if (interactive.pressed1) eq.bar1 = d(rd) * slider;
 	else eq.bar1 = 0;
-	if (interactive.pressed2) eq.bar2 = d(rd);
+	if (interactive.pressed2) eq.bar2 = d(rd) * slider;
 	else eq.bar2 = 0;
-	if (interactive.pressed3) eq.bar3 = d(rd);
+	if (interactive.pressed3) eq.bar3 = d(rd) * slider;
 	else eq.bar3 = 0;
-	if (interactive.pressed4) eq.bar4 = d(rd);
+	if (interactive.pressed4) eq.bar4 = d(rd) * slider;
 	else eq.bar4 = 0;
-	eq.bar5 = d(rd);
 }
+
+constexpr auto fps = 60, msec = 1000 / fps;
 
 void timer(int value) {
 	glutTimerFunc(msec, timer, 0);
@@ -230,4 +273,30 @@ void timer(int value) {
 	if (!interactive.pressed4 && interactive.button4 <= 0) interactive.button4 += 0.01;
 
 	glutPostRedisplay();
+}
+
+int prevX = 0, prevY = 0;
+void mouse(int x, int y) {
+	if (x - prevX > 0) visionAngle -= visionIncrement/4;
+	if (x - prevX < 0) visionAngle += visionIncrement/4;
+	if (y - prevY > 0) vertAngle -= visionIncrement/4;
+	if (y - prevY < 0) vertAngle += visionIncrement/4;
+	
+	if (vertAngle > M_PI) vertAngle = M_PI;
+	if (vertAngle <= 0) vertAngle = 0.001;
+	
+	prevX = x;
+	prevY = y;
+}
+
+void wheel(int button, int state, int x, int y) {
+	if (button == 3 && state == GLUT_DOWN && fov - 3 > 0) fov -= 3;
+	if (button == 4 && state == GLUT_DOWN) fov += 3;
+}
+
+void reshape(int w, int h) {
+	if (h == 0) h = 1;
+
+	windowWidth = w;
+	windowHeight = h;
 }

@@ -22,7 +22,6 @@ typedef struct {
 	GLdouble bar2;
 	GLdouble bar3;
 	GLdouble bar4;
-	GLdouble bar5;
 } bars;
 
 void equalizer(const bars*);

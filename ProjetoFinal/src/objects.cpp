@@ -1,10 +1,12 @@
+#include <cmath>
+
 #include "libs/objects.h"
 #include "libs/geometry.h"
 #include "libs/palette.h"
 
 void slider(const GLdouble* pos) {
-	const GLdouble baseWidth = 0.2, baseHeight = 0.2, baseDepth = 0.5;
-	const GLdouble accentWidth = 0.5 * baseWidth, accentHeight = 0.5 * baseHeight, accentDepth = 0.75 * baseDepth;
+	const GLdouble baseWidth = 0.5, baseHeight = 0.2, baseDepth = 0.2;
+	const GLdouble accentWidth = 0.75 * baseWidth, accentHeight = 0.5 * baseHeight, accentDepth = 0.5 * baseDepth;
 	GLdouble base[] = {
 		LIGHTGRAY, LIGHTGRAY, LIGHTGRAY, LIGHTGRAY,
 		LIGHTGRAY, LIGHTGRAY, LIGHTGRAY, LIGHTGRAY,
@@ -24,15 +26,16 @@ void slider(const GLdouble* pos) {
 	};
 
 	// Slider horizontal line
+	glLineWidth(2);
 	glColor4d(WHITE);
 	glBegin(GL_LINES); {
-		glVertex3d(-0.5, 0, 0);
-		glVertex3d(0.5, 0, 0);
+		glVertex3d(0, 0, -0.5);
+		glVertex3d(0, 0, 0.5);
 	} glEnd();
 
 	glPushMatrix(); {
 		// Slides the control over the line
-		glTranslated(*pos, 0, 0);
+		glTranslated(0, 0, *pos);
 
 		// Base control
 		glPushMatrix(); {
@@ -59,7 +62,6 @@ void knob(const GLdouble* angle) {
 		RED, RED, RED, RED,
 		RED, RED, RED, RED
 	};
-
 	glPushMatrix(); {
 		glRotated(*angle, 0, 1, 0);
 		glColor4d(LIGHTGRAY);
@@ -88,7 +90,7 @@ void button() {
 	} glPopMatrix();
 }
 
-void equalizer(const bars* eq) {
+void equalizer(const bars* eq, const mixerSettings* interactive) {
 	constexpr auto spacing = 0.5;
 
 	const GLdouble colours[] = {
@@ -102,26 +104,34 @@ void equalizer(const bars* eq) {
 
 	glPushMatrix(); {
 		//glScaled(1, 1, 0);
-		glPushMatrix(); {
-			glTranslated(-1.8, 0, 0);
-			glScaled(1, 1, eq->bar1);
-			cube(colours);
-		} glPopMatrix();
-		glPushMatrix(); {
-			glTranslated(-0.6, 0, 0);
-			glScaled(1, 1, eq->bar2);
-			cube(colours);
-		} glPopMatrix();
-		glPushMatrix(); {
-			glTranslated(0.6, 0, 0);
-			glScaled(1, 1, eq->bar3);
-			cube(colours);
-		} glPopMatrix();
-		glPushMatrix(); {
-			glTranslated(1.8, 0, 0);
-			glScaled(1, 1, eq->bar4);
-			cube(colours);
-		} glPopMatrix();
+		if (interactive->pressed1) {
+			glPushMatrix(); {
+				glTranslated(-1.8, 0, 0);
+				glScaled(1, 1, eq->bar1);
+				cube(colours);
+			} glPopMatrix();
+		}
+		if (interactive->pressed2) {
+			glPushMatrix(); {
+				glTranslated(-0.6, 0, 0);
+				glScaled(1, 1, eq->bar2);
+				cube(colours);
+			} glPopMatrix();
+		}
+		if (interactive->pressed3) {
+			glPushMatrix(); {
+				glTranslated(0.6, 0, 0);
+				glScaled(1, 1, eq->bar3);
+				cube(colours);
+			} glPopMatrix();
+		}
+		if (interactive->pressed4) {
+			glPushMatrix(); {
+				glTranslated(1.8, 0, 0);
+				glScaled(1, 1, eq->bar4);
+				cube(colours);
+			} glPopMatrix();
+		}
 	} glPopMatrix();
 }
 
@@ -158,48 +168,60 @@ void mixer(const mixerSettings* interactive, const bars* eq) {
 		} glPopMatrix();
 	}
 
+	const GLdouble offset = -width / 2 + 1;
+
 	glPushMatrix(); {
-		glTranslated(0, height / 2, (depth - 1) / 2);
-		glScaled(1.5, 1, 1.5);
+		// Knob height: 0.3 -> Half: 0.15
+		glTranslated(offset, height / 2 + 0.15, 1);
+		knob(&interactive->knob1);
+		glTranslated(0, -0.15 / 2 + interactive->button1, 0.5);
+		button();
+	} glPopMatrix();
+
+	glPushMatrix(); {
+		// Knob height: 0.3 -> Half: 0.15
+		glTranslated(offset + 1, height / 2 + 0.15, 1);
+		knob(&interactive->knob2);
+		glTranslated(0, -0.15 / 2 + interactive->button2, 0.5);
+		button();
+	} glPopMatrix();
+
+	glPushMatrix(); {
+		// Knob height: 0.3 -> Half: 0.15
+		glTranslated(offset + 2, height / 2 + 0.15, 1);
+		knob(&interactive->knob3);
+		glTranslated(0, -0.15 / 2 + interactive->button3, 0.5);
+		button();
+	} glPopMatrix();
+
+	glPushMatrix(); {
+		// Knob height: 0.3 -> Half: 0.15
+		glTranslated(offset + 3, height / 2 + 0.15, 1);
+		knob(&interactive->knob4);
+		glTranslated(0, -0.15 / 2 + interactive->button4, 0.5);
+		button();
+	} glPopMatrix();
+
+	glPushMatrix(); {
+		glTranslated(offset + 4, height / 2, 1);
+		glScaled(1, 1, 1);
 		slider(&interactive->slider);
 	} glPopMatrix();
 
-	glPushMatrix(); {
-		// Knob height: 0.3 -> Half: 0.15
-		glTranslated(-width / 2 + 1, height / 2 + 0.15, -1);
-		knob(&interactive->knob1);
-		glTranslated(0.5, -0.15 / 2 + interactive->button1, 0);
-		button();
-	} glPopMatrix();
 
 	glPushMatrix(); {
-		// Knob height: 0.3 -> Half: 0.15
-		glTranslated(-width / 2 + 1, height / 2 + 0.15, 0);
-		knob(&interactive->knob2);
-		glTranslated(0.5, -0.15 / 2 + interactive->button2, 0);
-		button();
-	} glPopMatrix();
+		glTranslated(0, (height + 1) / 2, -1);
+		glRotated(45, 1, 0, 0);
+		glPushMatrix(); {
+			glScaled(width / 2, 0.1, depth / 2);
+			cube(sides);
+		} glPopMatrix();
 
-	glPushMatrix(); {
-		// Knob height: 0.3 -> Half: 0.15
-		glTranslated(width / 2 - 1, height / 2 + 0.15, -1);
-		knob(&interactive->knob3);
-		glTranslated(-0.5, -0.15 / 2 + interactive->button3, 0);
-		button();
-	} glPopMatrix();
-
-	glPushMatrix(); {
-		// Knob height: 0.3 -> Half: 0.15
-		glTranslated(width / 2 - 1, height / 2 + 0.15, 0);
-		knob(&interactive->knob4);
-		glTranslated(-0.5, -0.15 / 2 + interactive->button4, 0);
-		button();
-	} glPopMatrix();
-
-	// Draw equalizer
-	glPushMatrix(); {
-		glTranslated(0, height / 2, -(depth - 1.5) / 2);
-		glScaled(0.25, 0.1, 0.25);
-		equalizer(eq);
+		// Draw equalizer
+		glPushMatrix(); {
+			glTranslated(0, 0.15, 0.08);
+			glScaled(0.25, 0.1, 0.25);
+			equalizer(eq, interactive);
+		} glPopMatrix();
 	} glPopMatrix();
 }
