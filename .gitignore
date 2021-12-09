@@ -27,9 +27,12 @@
 *.lib
 
 # Executables
+project
 *.exe
 *.out
 *.app
+
+# Visual Studio
 /.vs
 /ProjetoFinal/.vs/ProjetoFinal/v16
 /ProjetoFinal/Debug
@@ -38,3 +41,6 @@
 /ProjetoFinal/ProjetoFinal.vcxproj
 /ProjetoFinal/ProjetoFinal.sln
 /ProjetoFinal/src/.vscode
+
+# Enunciados
+*.pdf
