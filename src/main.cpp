@@ -159,11 +159,11 @@ void init() {
 struct {
 	GLfloat intensity = 1;
 	GLfloat color[3] = {1, 1, 1};
-	GLfloat position[4] = {0, 15, 0, 1};
+	GLfloat position[4] = {0, 10, 10, 1};
 	GLfloat ambient[3] = {0, 0, 0};
 	GLfloat diffuse[3];
 	GLfloat specular[3];
-	GLfloat direction[3] = {0, -1, 0};
+	GLfloat direction[3] = {0, -1, -1};
 	GLint cutoff = 20;
 	GLint exponent = 65;
 } SpotLight;
@@ -171,7 +171,7 @@ struct {
 struct {
 	GLfloat intensity = 0.2;
 	GLfloat color[3] = {1, 1, 1};
-	GLfloat position[4] = {0, 15, 0, 1};
+	GLfloat position[4] = {0, 5, 0, 1};
 	GLfloat ambient[3] = {0, 0, 0};
 	GLfloat diffuse[3];
 	GLfloat specular[3];
@@ -352,14 +352,18 @@ void keyboard(unsigned char key, int x, int y) {
 		if (Camera.radius > 50) Camera.radius = 50;
 		break;
 		// Lighting
-	case '/':
+	case '1':
 		if (Ambient.enabled) glLightModelfv(GL_LIGHT_MODEL_AMBIENT, Ambient.dark);
 		else glLightModelfv(GL_LIGHT_MODEL_AMBIENT, Ambient.light);
 		Ambient.enabled = !Ambient.enabled;
 		break;
-	case '*':
+	case '2':
 		if (glIsEnabled(GL_LIGHT1)) glDisable(GL_LIGHT1);
 		else glEnable(GL_LIGHT1);
+		break;
+	case '3':
+		if (glIsEnabled(GL_LIGHT0)) glDisable(GL_LIGHT0);
+		else glEnable(GL_LIGHT0);
 		break;
 	case '8':
 		Ambient.intensity += 0.1;
@@ -415,6 +419,7 @@ void special(int key, int x, int y) {
 constexpr auto lightsFps = 2, lightMsec = 1000 / lightsFps;
 void discoLights(int value) {
 	glutTimerFunc(lightMsec, discoLights, 2);
+	if (!glIsEnabled(GL_LIGHT0)) return;
 	if (PointLight.color[0]) {
 		PointLight.color[0] = 0;
 		PointLight.color[1] = 1;
@@ -459,16 +464,18 @@ void printStats() {
 		snprintf(str, sizeof str, "Ambient Intensity: %.2f", Ambient.intensity);
 		rasterText(str, 10, 75);
 	} else rasterText("Ambient Light off", 10, 75);
-	if (glIsEnabled(GL_LIGHT0)) {
+	if (glIsEnabled(GL_LIGHT0)) rasterText("Point Light enabled", 10, 60);
+	else rasterText("Point Light disabled", 10, 60);
+	if (glIsEnabled(GL_LIGHT1)) {
 		snprintf(str, sizeof str, "Spot Light position: (%.2f, %.2f, %.2f)",
 				 SpotLight.position[0], SpotLight.position[1], SpotLight.position[2]);
-		rasterText(str, 10, 60);
-	} else rasterText("Spot Light off", 10, 60);
+		rasterText(str, 10, 45);
+	} else rasterText("Spot Light off", 10, 45);
 	if (enableMesh) {
 		snprintf(str, sizeof str, "Mesh: %dx%d", meshCount, meshCount);
-		rasterText(str, 10, 45);
+		rasterText(str, 10, 30);
 	}
-	else rasterText("Mesh disabled", 10, 45);
+	else rasterText("Mesh disabled", 10, 30);
 }
 
 constexpr auto fps = 60, msec = 1000 / fps;
