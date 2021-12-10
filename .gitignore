@@ -42,5 +42,8 @@ project
 /ProjetoFinal/ProjetoFinal.sln
 /ProjetoFinal/src/.vscode
 
+# Visual Studio Code
+.vscode
+
 # Enunciados
 *.pdf

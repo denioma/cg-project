@@ -267,59 +267,47 @@ void table() {
 	glDisable(GL_BLEND);
 }
 
-void mesh(GLdouble count) {
+void mesh(GLint dim) {
 	int i, j;
-	GLdouble half = count / 2;
-	glPushMatrix(); {
-		glTranslated(-0.5, 0, -0.5);
-		glBegin(GL_POLYGON);
-		glNormal3f(0, 1, 0);
-		for (i = 0; i < count-1; i++) {
-			for (j = 0; j < count-1; j++) {
-				glTexCoord2d((GLdouble)j / count, (GLdouble)i / count);
-				glVertex3d((GLdouble)j / count, 0, (GLdouble)i / count);
-				glTexCoord2d((GLdouble)(j + 1) / count, (GLdouble)i / count);
-				glVertex3d((GLdouble)(j + 1) / count, 0, (GLdouble)i / count);
-				glTexCoord2d((GLdouble)(j + 1) / count, (GLdouble)(i + 1) / count);
-				glVertex3d((GLdouble)(j + 1) / count, 0, (GLdouble)(i + 1) / count);
-				glTexCoord2d((GLdouble)j / count, (GLdouble)(i + 1) / count);
-				glVertex3d((GLdouble)j / count, 0, (GLdouble)(i + 1) / count);
-			}
+	GLdouble med_dim = (GLdouble)dim / 2;
+	glPushMatrix();
+	glTranslatef(-1.0, -1.0, 0);  // meio do poligono 
+
+	glNormal3f(0, 0, 1);          //normal 
+
+	glBegin(GL_QUADS);
+	for (i = 0; i < dim; i++)
+		for (j = 0; j < dim; j++) {
+			glTexCoord2f((GLdouble)j / dim, (GLdouble)i / dim);
+			glVertex3d((GLdouble)j / med_dim, (GLdouble)i / med_dim, 0);
+			glTexCoord2f((GLdouble)(j + 1) / dim, (GLdouble)i / dim);
+			glVertex3d((GLdouble)(j + 1) / med_dim, (GLdouble)i / med_dim, 0);
+			glTexCoord2f((GLdouble)(j + 1) / dim, (GLdouble)(i + 1) / dim);
+			glVertex3d((GLdouble)(j + 1) / med_dim, (GLdouble)(i + 1) / med_dim, 0);
+			glTexCoord2f((GLdouble)j / dim, (GLdouble)(i + 1) / dim);
+			glVertex3d((GLdouble)j / med_dim, (GLdouble)(i + 1) / med_dim, 0);
 		}
-		glEnd();
-	} glPopMatrix();
+	glEnd();
+	glPopMatrix();
 }
 
-void quad() {
-	glNormal3f(0, 1, 0);
-	glBegin(GL_POLYGON); {
-		glTexCoord2d(0, 0);
-		glVertex3d(-0.5, 0, 0.5);
-		glTexCoord2d(0, 1);
-		glVertex3d(0.5, 0, 0.5);
-		glTexCoord2d(1, 1);
-		glVertex3d(0.5, 0, -0.5);
-		glTexCoord2d(1, 0);
-		glVertex3d(-0.5, 0, -0.5);
-	} glEnd();
-}
+void wall(bool enableMesh, GLint meshCount) {
+	initMaterial(materials::silver);
+	// glPushMatrix(); {
+	// 	glTranslated(0, -4, 0);
+	// 	glScaled(15, 1, 10);
+	// 	cube(NULL);
+	// } glPopMatrix();
 
-void wall(bool enableMesh) {
-	glDisable(GL_CULL_FACE);
-	initMaterial(materials::redPlastic);
-	const int meshCount = 256;
+	glBlendFunc(GL_ONE, GL_ZERO);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, flooring);
 	glPushMatrix(); {
 		glTranslated(0, -4, 0);
-		glScaled(15, 1, 10);
-		cube(NULL);
+		glScaled(10, 1, 10);
+		glRotated(-90, 1, 0, 0);
+		if (enableMesh) mesh(meshCount);
+		else mesh(1);
 	} glPopMatrix();
-
-	if (enableMesh) {
-		glBlendFunc(GL_ONE, GL_ZERO);
-		glPushMatrix(); {
-			glTranslated(0, -3.50, 0);
-			glScaled(15, 1, 10);
-			mesh(meshCount);
-		} glPopMatrix();
-	}
+	glDisable(GL_TEXTURE_2D);
 }

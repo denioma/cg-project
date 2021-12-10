@@ -16,6 +16,7 @@ void keyboard(unsigned char, int, int);
 void special(int, int, int);
 void timer(int);
 void eqTimer(int);
+void discoLights(int);
 void mouse(int, int);
 void wheel(int, int, int, int);
 void reshape(int, int);
@@ -42,6 +43,7 @@ int main(int argc, char **argv) {
 	glutMouseFunc(wheel);		  // Mouse Callback #2
 	glutTimerFunc(0, timer, 0);	  // Timer #1 - Redisplay
 	glutTimerFunc(0, eqTimer, 1); // Timer #2 - EQ
+	glutTimerFunc(0, discoLights, 2);
 	glutReshapeFunc(reshape);	  // Reshape Callback
 
 	glutMainLoop();
@@ -158,46 +160,45 @@ struct {
 	GLfloat intensity = 1;
 	GLfloat color[3] = {1, 1, 1};
 	GLfloat position[4] = {0, 15, 0, 1};
-	GLfloat ambient[4] = {0, 0, 0, 0};
-	GLfloat diffuse[4] = {1, 1, 1, 1};
-	GLfloat specular[4] = {1, 1, 1, 1};
+	GLfloat ambient[3] = {0, 0, 0};
+	GLfloat diffuse[3];
+	GLfloat specular[3];
 	GLfloat direction[3] = {0, -1, 0};
-	GLint cutoff = 30;
-	GLint exponent = 20;
+	GLint cutoff = 20;
+	GLint exponent = 65;
 } SpotLight;
 
 struct {
 	GLfloat intensity = 0.2;
-	GLfloat color[3] = {1, 0, 0};
-	GLfloat position[4] = {0, 0, 1, 0};
-	GLfloat ambient[4] = {0, 0, 0, 0};
-	GLfloat diffuse[4] = {1, 1, 1, 1};
-	GLfloat specular[4] = {1, 1, 1, 1};
-	GLfloat direction[3] = {0, -1, 0};
-} DirectionLight;
+	GLfloat color[3] = {1, 1, 1};
+	GLfloat position[4] = {0, 15, 0, 1};
+	GLfloat ambient[3] = {0, 0, 0};
+	GLfloat diffuse[3];
+	GLfloat specular[3];
+} PointLight;
 
 void lighting() {
 	for (int i = 0; i < 3; i++) {
 		SpotLight.ambient[i] = SpotLight.color[i] * SpotLight.intensity;
 		SpotLight.diffuse[i] = SpotLight.color[i] * SpotLight.intensity;
 		SpotLight.specular[i] = SpotLight.color[i] * SpotLight.intensity;
-		DirectionLight.ambient[i] = DirectionLight.color[i] * DirectionLight.intensity;
-		DirectionLight.diffuse[i] = DirectionLight.color[i] * DirectionLight.intensity;
-		DirectionLight.specular[i] = DirectionLight.color[i] * DirectionLight.intensity;
+		PointLight.ambient[i] = PointLight.color[i] * PointLight.intensity;
+		PointLight.diffuse[i] = PointLight.color[i] * PointLight.intensity;
+		PointLight.specular[i] = PointLight.color[i] * PointLight.intensity;
 	}
 
-	glLightfv(GL_LIGHT0, GL_POSITION, SpotLight.position);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, SpotLight.ambient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, SpotLight.diffuse);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, SpotLight.specular);
-	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, SpotLight.direction);
-	glLighti(GL_LIGHT0, GL_SPOT_EXPONENT, SpotLight.exponent);
-	glLighti(GL_LIGHT0, GL_SPOT_CUTOFF, SpotLight.cutoff);
+	glLightfv(GL_LIGHT0, GL_POSITION, PointLight.position);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, PointLight.ambient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, PointLight.diffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, PointLight.specular);
 
-	glLightfv(GL_LIGHT1, GL_POSITION, DirectionLight.position);
-	glLightfv(GL_LIGHT1, GL_AMBIENT, DirectionLight.ambient);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, DirectionLight.diffuse);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, DirectionLight.specular);
+	glLightfv(GL_LIGHT1, GL_POSITION, SpotLight.position);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, SpotLight.ambient);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, SpotLight.diffuse);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, SpotLight.specular);
+	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, SpotLight.direction);
+	glLighti(GL_LIGHT1, GL_SPOT_EXPONENT, SpotLight.exponent);
+	glLighti(GL_LIGHT1, GL_SPOT_CUTOFF, SpotLight.cutoff);
 }
 
 void lightPos() {
@@ -209,17 +210,14 @@ void lightPos() {
 	glEnable(GL_LIGHTING);
 }
 
-bool enableMesh = false;
+bool enableMesh = true;
+GLint meshCount = 128;
 // Object drawing calls
 void drawCalls(const GLboolean mini) {
 	lighting();
-	if (mini) {
-		drawSkyBox();
-		if (glIsEnabled(GL_LIGHT0))
-			lightPos();
-	}
+	if (mini && glIsEnabled(GL_LIGHT0)) lightPos();
 	mixer(&interactive, &eq);
-	wall(enableMesh);
+	wall(enableMesh, meshCount);
 	table();
 }
 
@@ -360,8 +358,8 @@ void keyboard(unsigned char key, int x, int y) {
 		Ambient.enabled = !Ambient.enabled;
 		break;
 	case '*':
-		if (glIsEnabled(GL_LIGHT0)) glDisable(GL_LIGHT0);
-		else glEnable(GL_LIGHT0);
+		if (glIsEnabled(GL_LIGHT1)) glDisable(GL_LIGHT1);
+		else glEnable(GL_LIGHT1);
 		break;
 	case '8':
 		Ambient.intensity += 0.1;
@@ -375,6 +373,12 @@ void keyboard(unsigned char key, int x, int y) {
 		// Quit
 	case 'm':
 		enableMesh = !enableMesh;
+		break;
+	case ',':
+		meshCount /= 2;
+		break;
+	case '.':
+		meshCount *= 2;
 		break;
 	case 27:
 		glutLeaveMainLoop();
@@ -408,10 +412,24 @@ void special(int key, int x, int y) {
 	}
 }
 
+constexpr auto lightsFps = 2, lightMsec = 1000 / lightsFps;
+void discoLights(int value) {
+	glutTimerFunc(lightMsec, discoLights, 2);
+	if (PointLight.color[0]) {
+		PointLight.color[0] = 0;
+		PointLight.color[1] = 1;
+	} else if (PointLight.color[1]) {
+		PointLight.color[1] = 0;
+		PointLight.color[2] = 1;
+	} else {
+		PointLight.color[2] = 0;
+		PointLight.color[0] = 1;
+	}
+}
+
 // C++ random generators
 std::random_device rd;
 std::uniform_real_distribution<GLdouble> d(0, 5);
-
 constexpr auto eqFps = 20, eqMsec = 1000 / eqFps;
 
 // Create random values for EQ bar scale
@@ -446,7 +464,10 @@ void printStats() {
 				 SpotLight.position[0], SpotLight.position[1], SpotLight.position[2]);
 		rasterText(str, 10, 60);
 	} else rasterText("Spot Light off", 10, 60);
-	if (enableMesh) rasterText("Mesh enabled", 10, 45);
+	if (enableMesh) {
+		snprintf(str, sizeof str, "Mesh: %dx%d", meshCount, meshCount);
+		rasterText(str, 10, 45);
+	}
 	else rasterText("Mesh disabled", 10, 45);
 }
 
