@@ -1,5 +1,5 @@
-#include "../include/textures.h"
-#include "../include/RgbImage.h"
+#include "include/textures.h"
+#include "include/RgbImage.h"
 
 GLuint wood, metal, skyBoxTex, flooring;
 

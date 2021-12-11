@@ -1,4 +1,4 @@
-#include "../include/materials.h"
+#include "include/materials.h"
 
 // Material table: http://devernay.free.fr/cours/opengl/materials.html
 

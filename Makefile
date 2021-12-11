@@ -13,4 +13,4 @@ $(objs): ./objs/%.o: ./src/%.cpp
 
 .PHONY: clean
 clean:
-	rm -rf src/*.o
+	rm -rf objs/*.o

@@ -1,10 +1,10 @@
 #include <cmath>
 
-#include "../include/objects.h"
-#include "../include/geometry.h"
-#include "../include/palette.h"
-#include "../include/materials.h"
-#include "../include/textures.h"
+#include "include/objects.h"
+#include "include/geometry.h"
+#include "include/palette.h"
+#include "include/materials.h"
+#include "include/textures.h"
 
 void slider(const GLdouble* pos) {
 	const GLdouble baseWidth = 0.5, baseHeight = 0.2, baseDepth = 0.2;
@@ -291,7 +291,7 @@ void mesh(GLint dim) {
 	glPopMatrix();
 }
 
-void wall(bool enableMesh, GLint meshCount) {
+void floor(bool enableMesh, GLint meshCount) {
 	initMaterial(materials::silver);
 	// glPushMatrix(); {
 	// 	glTranslated(0, -4, 0);

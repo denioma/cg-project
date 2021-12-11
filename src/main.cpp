@@ -3,23 +3,7 @@
 #include <random>
 #include <cstdio>
 #include <GL/freeglut.h>
-
-#include "../include/palette.h"
-#include "../include/geometry.h"
-#include "../include/objects.h"
-#include "../include/textures.h"
-#include "../include/materials.h"
-
-void init();
-void draw();
-void keyboard(unsigned char, int, int);
-void special(int, int, int);
-void timer(int);
-void eqTimer(int);
-void discoLights(int);
-void mouse(int, int);
-void wheel(int, int, int, int);
-void reshape(int, int);
+#include "include/main.h"
 
 constexpr auto windowTitle = "Projeto CG | ramachado@student.dei.uc.pt";
 constexpr auto world = 10;
@@ -43,7 +27,6 @@ int main(int argc, char **argv) {
 	glutMouseFunc(wheel);		  // Mouse Callback #2
 	glutTimerFunc(0, timer, 0);	  // Timer #1 - Redisplay
 	glutTimerFunc(0, eqTimer, 1); // Timer #2 - EQ
-	glutTimerFunc(0, discoLights, 2);
 	glutReshapeFunc(reshape);	  // Reshape Callback
 
 	glutMainLoop();
@@ -96,36 +79,14 @@ bars eq;
 // Global Lighting
 struct ambient {
 	GLboolean enabled = true;
-	GLfloat intensity = 0.4;
+	GLfloat intensity = 0.2;
 	GLfloat light[4] = {0, 0, 0, 1};
 	GLfloat dark[4] = {0, 0, 0, 1};
+	void init() {
+		for (int i = 0; i < 3; i++) light[i] = intensity;
+		glLightModelfv(GL_LIGHT_MODEL_AMBIENT, light);
+	}
 } Ambient;
-
-// Sky Box
-GLUquadric *skyBox = gluNewQuadric();
-
-void drawSkyBox() {
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, skyBoxTex);
-	glPushMatrix(); {
-		glRotated(-90, 1, 0, 0);
-		gluQuadricOrientation(skyBox, GLU_INSIDE);
-		gluQuadricDrawStyle(skyBox, GLU_FILL);
-		gluQuadricNormals(skyBox, GLU_SMOOTH);
-		gluQuadricTexture(skyBox, GLU_TRUE);
-		gluSphere(skyBox, 30, 100, 100);
-	} glPopMatrix();
-	glDisable(GL_TEXTURE_2D);
-}
-
-void updateAmbient() {
-	for (int i = 0; i < 3; i++) Ambient.light[i] = Ambient.intensity;
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, Ambient.light);
-}
-
-inline void initLighting() {
-	updateAmbient();
-}
 
 // OpenGL and interactive elements init
 void init() {
@@ -137,12 +98,10 @@ void init() {
 	glCullFace(GL_BACK);
 
 	// Lighting
-	initLighting();
+	glEnable(GL_LIGHTING);
+	Ambient.init();
 
 	// Textures
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
 	initTextures();
 
 	interactive.slider = 0.5;
@@ -156,25 +115,66 @@ void init() {
 	interactive.pressed4 = false;
 }
 
+const char colours[4][6] = {"White", "Red", "Green", "Blue"};
+
 struct {
 	GLfloat intensity = 1;
 	GLfloat color[3] = {1, 1, 1};
-	GLfloat position[4] = {0, 10, 10, 1};
 	GLfloat ambient[3] = {0, 0, 0};
 	GLfloat diffuse[3];
 	GLfloat specular[3];
+	GLfloat position[4] = {0, 10, 15, 1};
 	GLfloat direction[3] = {0, -1, -1};
-	GLint cutoff = 20;
-	GLint exponent = 65;
+	GLint cutoff = 25;
+	GLint exponent = 50;
+	short mode = 0;
+	void cycle() {
+		if (!glIsEnabled(GL_LIGHT0)) return;
+		mode = (mode + 1) % 4;
+		if (mode != 0) for (int i = 0; i < 3; i++) color[i] = 0;
+		switch (mode) {
+		case 0:
+			for (int i = 0; i < 3; i++) color[i] = 1;
+		case 1:
+			color[0] = 1;
+			break;
+		case 2:
+			color[1] = 1;
+			break;
+		case 3:
+			color[2] = 1;
+			break;
+		}
+	}
 } SpotLight;
 
 struct {
 	GLfloat intensity = 0.2;
 	GLfloat color[3] = {1, 1, 1};
-	GLfloat position[4] = {0, 5, 0, 1};
 	GLfloat ambient[3] = {0, 0, 0};
 	GLfloat diffuse[3];
 	GLfloat specular[3];
+	GLfloat position[4] = {0, 5, -5, 1};
+	bool discoMode = false;
+	short mode = 0;
+	void cycle() {
+		if (!glIsEnabled(GL_LIGHT1)) return;
+		mode = (mode + 1) % 4;
+		if (mode != 0) for (int i = 0; i < 3; i++) color[i] = 0;
+		switch (mode) {
+		case 0:
+			for (int i = 0; i < 3; i++) color[i] = 1;
+		case 1:
+			color[0] = 1;
+			break;
+		case 2:
+			color[1] = 1;
+			break;
+		case 3:
+			color[2] = 1;
+			break;
+		}
+	}
 } PointLight;
 
 void lighting() {
@@ -201,10 +201,10 @@ void lighting() {
 	glLighti(GL_LIGHT1, GL_SPOT_CUTOFF, SpotLight.cutoff);
 }
 
-void lightPos() {
+void lightPos(const GLfloat pos[3]) {
 	glDisable(GL_LIGHTING);
 	glPushMatrix(); {
-		glTranslated(SpotLight.position[0], SpotLight.position[1], SpotLight.position[2]);
+		glTranslated(pos[0], pos[1], pos[2]);
 		cube(CUBE_WHITE);
 	} glPopMatrix();
 	glEnable(GL_LIGHTING);
@@ -213,11 +213,12 @@ void lightPos() {
 bool enableMesh = true;
 GLint meshCount = 128;
 // Object drawing calls
-void drawCalls(const GLboolean mini) {
+void drawCalls(const GLboolean main) {
 	lighting();
-	if (mini && glIsEnabled(GL_LIGHT0)) lightPos();
+	if (main && glIsEnabled(GL_LIGHT0)) lightPos(PointLight.position);
+	if (main && glIsEnabled(GL_LIGHT1)) lightPos(SpotLight.position);
 	mixer(&interactive, &eq);
-	wall(enableMesh, meshCount);
+	floor(enableMesh, meshCount);
 	table();
 }
 
@@ -228,11 +229,11 @@ void draw() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// 2D Viewport for text rendering
-	glViewport(0, windowHeight - 100, 100, 100);
+	glViewport(0, windowHeight - 200, 100, 200);
 	glDisable(GL_LIGHTING);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(0, 100, 0, 100);
+	gluOrtho2D(0, 100, 0, 200);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	printStats();
@@ -275,11 +276,6 @@ void draw() {
 	drawCalls(false);
 
 	glutSwapBuffers();
-}
-
-void cleanup() {
-	gluDeleteQuadric(skyBox);
-	exit(0);
 }
 
 // Keyboard (ASCII) event handler
@@ -365,16 +361,31 @@ void keyboard(unsigned char key, int x, int y) {
 		if (glIsEnabled(GL_LIGHT0)) glDisable(GL_LIGHT0);
 		else glEnable(GL_LIGHT0);
 		break;
+	case '9':
+		SpotLight.cycle();
+		break;
 	case '8':
-		Ambient.intensity += 0.1;
-		updateAmbient();
+		if (glIsEnabled(GL_LIGHT0)) PointLight.intensity += 0.05;
 		break;
 	case '7':
-		Ambient.intensity -= 0.1;
-		if (Ambient.intensity < 0) Ambient.intensity = 0;
-		updateAmbient();
+		if (glIsEnabled(GL_LIGHT0)) {
+			PointLight.intensity -= 0.05;
+			if (PointLight.intensity < 0) PointLight.intensity = 0;
+		}
 		break;
-		// Quit
+	case '6':
+		PointLight.cycle();
+		break;
+	case '5':
+		if (glIsEnabled(GL_LIGHT1)) SpotLight.intensity += 0.1;
+		break;
+	case '4':
+		if (glIsEnabled(GL_LIGHT1)) {
+			SpotLight.intensity -= 0.1;
+			if (SpotLight.intensity < 0) SpotLight.intensity = 0;
+		}
+		break;
+		// Mesh Controls
 	case 'm':
 		enableMesh = !enableMesh;
 		break;
@@ -384,9 +395,10 @@ void keyboard(unsigned char key, int x, int y) {
 	case '.':
 		meshCount *= 2;
 		break;
+		// Quit
 	case 27:
 		glutLeaveMainLoop();
-		cleanup();
+		exit(0);
 		break;
 	}
 }
@@ -413,22 +425,6 @@ void special(int key, int x, int y) {
 	case GLUT_KEY_F11:
 		glutFullScreenToggle();
 		break;
-	}
-}
-
-constexpr auto lightsFps = 2, lightMsec = 1000 / lightsFps;
-void discoLights(int value) {
-	glutTimerFunc(lightMsec, discoLights, 2);
-	if (!glIsEnabled(GL_LIGHT0)) return;
-	if (PointLight.color[0]) {
-		PointLight.color[0] = 0;
-		PointLight.color[1] = 1;
-	} else if (PointLight.color[1]) {
-		PointLight.color[1] = 0;
-		PointLight.color[2] = 1;
-	} else {
-		PointLight.color[2] = 0;
-		PointLight.color[0] = 1;
 	}
 }
 
@@ -460,22 +456,42 @@ void rasterText(const char *str, GLint x, GLint y) {
 
 void printStats() {
 	char str[BUFSIZ];
+	const int offset = 15, x = 10;
+	int y = 180;
 	if (Ambient.enabled) {
 		snprintf(str, sizeof str, "Ambient Intensity: %.2f", Ambient.intensity);
-		rasterText(str, 10, 75);
-	} else rasterText("Ambient Light off", 10, 75);
-	if (glIsEnabled(GL_LIGHT0)) rasterText("Point Light enabled", 10, 60);
-	else rasterText("Point Light disabled", 10, 60);
+		rasterText(str, x, y);
+	} else rasterText("Ambient Light off", x, y);
+	y -= offset;
 	if (glIsEnabled(GL_LIGHT1)) {
-		snprintf(str, sizeof str, "Spot Light position: (%.2f, %.2f, %.2f)",
+		snprintf(str, sizeof str, "Spot Light Position: (%.2f, %.2f, %.2f)",
 				 SpotLight.position[0], SpotLight.position[1], SpotLight.position[2]);
-		rasterText(str, 10, 45);
-	} else rasterText("Spot Light off", 10, 45);
+		rasterText(str, x, y);
+		y -= offset;
+		snprintf(str, sizeof str, "Spot Light Color: %s", colours[SpotLight.mode]);
+		rasterText(str, x, y);
+		y -= offset;
+		snprintf(str, sizeof str, "Spot Light Intensity: %.2f", SpotLight.intensity);
+		rasterText(str, x, y);
+	} else rasterText("Spot Light off", x, y);
+	y -= offset;
+	if (glIsEnabled(GL_LIGHT0)) {
+		snprintf(str, sizeof str, "Point Light Position: (%.2f, %.2f, %.2f)",
+				 PointLight.position[0], PointLight.position[1], PointLight.position[2]);
+		rasterText(str, x, y);
+		y -= offset;
+		snprintf(str, sizeof str, "Point Light Color: %s", colours[PointLight.mode]);
+		rasterText(str, x, y);
+		y -= offset;
+		snprintf(str, sizeof str, "Point Light Intensity: %.2f", PointLight.intensity);
+		rasterText(str, x, y);
+	} else rasterText("Point Light off", x, y);
+	y -= offset;
 	if (enableMesh) {
 		snprintf(str, sizeof str, "Mesh: %dx%d", meshCount, meshCount);
-		rasterText(str, 10, 30);
+		rasterText(str, x, y);
 	}
-	else rasterText("Mesh disabled", 10, 30);
+	else rasterText("Mesh disabled", x, y);
 }
 
 constexpr auto fps = 60, msec = 1000 / fps;

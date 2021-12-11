@@ -28,4 +28,4 @@ typedef struct {
 //void equalizer(const bars*);
 void mixer(const mixerSettings*, const bars*);
 void table();
-void wall(bool enableMesh, GLint meshCount);
+void floor(bool enableMesh, GLint meshCount);

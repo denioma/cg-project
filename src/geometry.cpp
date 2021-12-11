@@ -1,5 +1,5 @@
-#include "../include/geometry.h"
-#include "../include/palette.h"
+#include "include/geometry.h"
+#include "include/palette.h"
 
 void cube(const GLdouble* colors) {
 	const GLdouble cubeNormals[] = {

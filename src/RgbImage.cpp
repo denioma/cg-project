@@ -22,7 +22,7 @@
 // Undocumented: This must be included *before* the #include of stdio.h (!!)
 #define _CRT_SECURE_NO_DEPRECATE 1
 
-#include "../include/RgbImage.h"
+#include "include/RgbImage.h"
 
 #ifndef RGBIMAGE_DONT_USE_OPENGL
 #if defined(_WIN32)			// If on windows, need this for gl.h
