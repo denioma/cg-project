@@ -20,7 +20,7 @@ void initTextures() {
 		0, GL_RGB, GL_UNSIGNED_BYTE, img.ImageData()
 	);
 
-	img.LoadBmpFile("assets/brushed_metal.bmp");
+	img.LoadBmpFile("assets/metal.bmp");
 	glGenTextures(1, &metal);
 	glBindTexture(GL_TEXTURE_2D, metal);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -48,7 +48,7 @@ void initTextures() {
 		0, GL_RGB, GL_UNSIGNED_BYTE, img.ImageData()
 	);
 
-	img.LoadBmpFile("assets/floor2.bmp");
+	img.LoadBmpFile("assets/floor.bmp");
 	glGenTextures(1, &flooring);
 	glBindTexture(GL_TEXTURE_2D, flooring);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);

@@ -293,13 +293,7 @@ void mesh(GLint dim) {
 
 void floor(bool enableMesh, GLint meshCount) {
 	initMaterial(materials::silver);
-	// glPushMatrix(); {
-	// 	glTranslated(0, -4, 0);
-	// 	glScaled(15, 1, 10);
-	// 	cube(NULL);
-	// } glPopMatrix();
 
-	glBlendFunc(GL_ONE, GL_ZERO);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, flooring);
 	glPushMatrix(); {

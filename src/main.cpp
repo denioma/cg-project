@@ -129,7 +129,7 @@ struct {
 	GLint exponent = 50;
 	short mode = 0;
 	void cycle() {
-		if (!glIsEnabled(GL_LIGHT0)) return;
+		if (!glIsEnabled(GL_LIGHT1)) return;
 		mode = (mode + 1) % 4;
 		if (mode != 0) for (int i = 0; i < 3; i++) color[i] = 0;
 		switch (mode) {
@@ -158,7 +158,7 @@ struct {
 	bool discoMode = false;
 	short mode = 0;
 	void cycle() {
-		if (!glIsEnabled(GL_LIGHT1)) return;
+		if (!glIsEnabled(GL_LIGHT0)) return;
 		mode = (mode + 1) % 4;
 		if (mode != 0) for (int i = 0; i < 3; i++) color[i] = 0;
 		switch (mode) {
@@ -362,7 +362,7 @@ void keyboard(unsigned char key, int x, int y) {
 		else glEnable(GL_LIGHT0);
 		break;
 	case '9':
-		SpotLight.cycle();
+		PointLight.cycle();
 		break;
 	case '8':
 		if (glIsEnabled(GL_LIGHT0)) PointLight.intensity += 0.05;
@@ -374,7 +374,7 @@ void keyboard(unsigned char key, int x, int y) {
 		}
 		break;
 	case '6':
-		PointLight.cycle();
+		SpotLight.cycle();
 		break;
 	case '5':
 		if (glIsEnabled(GL_LIGHT1)) SpotLight.intensity += 0.1;
